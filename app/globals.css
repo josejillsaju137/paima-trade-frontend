@@ -1,26 +1,91 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-bg: #FFFFFF;
+    --color-surface: #F3F4F6;
+    --color-surface-alt: #E5E7EB;
+    --color-border: #D1D5DB;
+    --color-text: #111827;
+    --color-text-secondary: #4B5563;
+  }
+
+  .dark {
+    --color-bg: #0A0E27;
+    --color-surface: #141829;
+    --color-surface-alt: #1A1F3A;
+    --color-border: #2D3561;
+    --color-text: #E5E7EB;
+    --color-text-secondary: #9CA3AF;
+  }
+
+  body {
+    @apply bg-dark-bg text-dark-text transition-colors duration-300;
+  }
+
+  * {
+    @apply border-dark-border;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-dark-surface hover:bg-dark-surface-alt text-dark-text border border-dark-border rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 bg-danger hover:bg-red-700 text-white rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-dark-surface border border-dark-border rounded-lg p-6;
+  }
+
+  .card-secondary {
+    @apply bg-dark-surface-alt border border-dark-border rounded-lg p-4;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 bg-dark-surface border border-dark-border rounded-lg text-dark-text placeholder-dark-text-secondary focus:outline-none focus:border-primary transition-colors duration-200;
+  }
+
+  .badge-success {
+    @apply inline-block px-2 py-1 bg-success/20 text-success rounded text-xs font-medium;
+  }
+
+  .badge-danger {
+    @apply inline-block px-2 py-1 bg-danger/20 text-danger rounded text-xs font-medium;
+  }
+
+  .badge-warning {
+    @apply inline-block px-2 py-1 bg-warning/20 text-warning rounded text-xs font-medium;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0E27;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2D3561;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3D4571;
 }
