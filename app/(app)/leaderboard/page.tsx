@@ -6,7 +6,7 @@ import { usePriceStore } from '@/app/store/priceStore';
 import { useAuthStore } from '@/app/store/authStore';
 import { formatPrice, formatPercent } from '@/app/utils/formatters';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://paima-trade-backend-production.up.railway.app';
 
 export default function LeaderboardPage() {
     const [mounted, setMounted] = useState(false);

@@ -8,7 +8,7 @@ import TradeModal from '@/app/components/ui/TradeModal';
 import { formatPrice } from '@/app/utils/formatters';
 import { io } from 'socket.io-client';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://paima-trade-backend-production.up.railway.app';
 
 export default function MarketPage() {
     const [mounted, setMounted] = useState(false);

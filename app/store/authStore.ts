@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { useTradeStore } from './tradeStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://paima-trade-backend-production.up.railway.app';
 
 interface AuthStore {
   isLoggedIn: boolean;
