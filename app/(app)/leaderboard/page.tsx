@@ -3,23 +3,56 @@
 import { useEffect, useState } from 'react';
 import { useTradeStore } from '@/app/store/tradeStore';
 import { usePriceStore } from '@/app/store/priceStore';
-import { mockAssets, mockLeaderboard, currentUserLeaderboard } from '@/app/utils/mockData';
+import { useAuthStore } from '@/app/store/authStore';
 import { formatPrice, formatPercent } from '@/app/utils/formatters';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function LeaderboardPage() {
     const [mounted, setMounted] = useState(false);
-    const { balance, portfolio, getTotalValue, getTotalPNLPercent } = useTradeStore();
-    const { assets, setAssets } = usePriceStore();
+    const { balance, getTotalValue, getTotalPNLPercent } = useTradeStore();
+    const { assets } = usePriceStore();
+    const { user } = useAuthStore();
 
-    // Initialize prices
+    const [leaderboard, setLeaderboard] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
-        const initialAssets = mockAssets.reduce((acc, asset) => {
-            acc[asset.symbol] = asset;
-            return acc;
-        }, {} as Record<string, any>);
-        setAssets(initialAssets);
         setMounted(true);
-    }, [setAssets]);
+        fetchLeaderboard();
+    }, []);
+
+    const fetchLeaderboard = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/leaderboard`);
+            if (res.ok) {
+                const data = await res.json();
+
+                // Ensure ranking by value, descending
+                const rankedData = Array.isArray(data) ? data.sort((a, b) => {
+                    const aVal = a.net_worth || a.portfolioValue || 0;
+                    const bVal = b.net_worth || b.portfolioValue || 0;
+                    return bVal - aVal;
+                }) : [];
+
+                // Add pseudo rank properties if missing
+                rankedData.forEach((trader, index) => {
+                    trader.rank = index + 1;
+                    // Mock profits if backend only sends net worths (assuming 1M default)
+                    const worth = trader.net_worth || trader.portfolioValue || 100000;
+                    trader.profit = worth - 100000;
+                    trader.profitPercent = (trader.profit / 100000) * 100;
+                    trader.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${trader.username}`;
+                });
+
+                setLeaderboard(rankedData);
+            }
+        } catch (err) {
+            console.error('Failed to fetch leaderboard:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (!mounted) return <div className="p-6 text-center">Loading...</div>;
 
@@ -27,12 +60,14 @@ export default function LeaderboardPage() {
     const totalValue = getTotalValue(prices);
     const totalPNLPercent = getTotalPNLPercent(prices);
 
+    const myRank = leaderboard.findIndex(t => t.username === user?.username) + 1 || '-';
+
     return (
         <div className="p-4 sm:p-6 space-y-6">
             {/* Header */}
             <div>
                 <h1 className="text-4xl font-bold text-dark-text">Leaderboard</h1>
-                <p className="text-dark-text-secondary">Weekly rankings - Top traders by return %</p>
+                <p className="text-dark-text-secondary">Weekly rankings - Top traders by portfolio valuation</p>
             </div>
 
             {/* Your Stats */}
@@ -40,7 +75,7 @@ export default function LeaderboardPage() {
                 <div className="grid md:grid-cols-4 gap-6">
                     <div>
                         <p className="text-sm text-dark-text-secondary mb-1">Your Rank</p>
-                        <p className="text-3xl font-bold text-primary">#{currentUserLeaderboard.rank}</p>
+                        <p className="text-3xl font-bold text-primary">#{myRank}</p>
                     </div>
                     <div>
                         <p className="text-sm text-dark-text-secondary mb-1">Portfolio Value</p>
@@ -61,64 +96,75 @@ export default function LeaderboardPage() {
 
             {/* Leaderboard Table */}
             <div className="card">
-                <h2 className="text-2xl font-bold mb-6 text-dark-text">🏆 Top Traders This Week</h2>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-dark-text">🏆 Top Traders This Week</h2>
+                    <button onClick={fetchLeaderboard} className="btn-secondary text-sm">
+                        🔄 Refresh
+                    </button>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-dark-border">
-                                <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Rank</th>
-                                <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Trader</th>
-                                <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Profit</th>
-                                <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Return %</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mockLeaderboard.map((trader) => {
-                                const isCurrentUser = trader.rank === currentUserLeaderboard.rank;
-                                return (
-                                    <tr
-                                        key={trader.rank}
-                                        className={`border-b border-dark-border transition-colors ${isCurrentUser ? 'bg-primary/20 hover:bg-primary/30' : 'hover:bg-dark-surface-alt'
-                                            }`}
-                                    >
-                                        <td className="py-4 px-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                                                    {trader.rank}
-                                                </span>
-                                                {trader.rank === 1 && <span className="text-xl">🥇</span>}
-                                                {trader.rank === 2 && <span className="text-xl">🥈</span>}
-                                                {trader.rank === 3 && <span className="text-xl">🥉</span>}
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-4">
-                                            <div className="flex items-center gap-3">
-                                                <img
-                                                    src={trader.avatar}
-                                                    alt={trader.username}
-                                                    className="w-8 h-8 rounded-full"
-                                                />
-                                                <div>
-                                                    <p className={`font-bold ${isCurrentUser ? 'text-primary' : 'text-dark-text'}`}>
-                                                        {trader.username}
-                                                    </p>
-                                                    {isCurrentUser && (
-                                                        <p className="text-xs text-primary font-bold">You</p>
-                                                    )}
+                    {isLoading ? (
+                        <div className="p-8 text-center text-dark-text-secondary">Loading rankings...</div>
+                    ) : leaderboard.length === 0 ? (
+                        <div className="p-8 text-center text-dark-text-secondary">No traders found on the leaderboard.</div>
+                    ) : (
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-dark-border">
+                                    <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Rank</th>
+                                    <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Trader</th>
+                                    <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Valuation</th>
+                                    <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Return %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leaderboard.map((trader) => {
+                                    const isCurrentUser = trader.username === user?.username;
+                                    return (
+                                        <tr
+                                            key={trader.username}
+                                            className={`border-b border-dark-border transition-colors ${isCurrentUser ? 'bg-primary/20 hover:bg-primary/30' : 'hover:bg-dark-surface-alt'}`}
+                                        >
+                                            <td className="py-4 px-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                                                        {trader.rank}
+                                                    </span>
+                                                    {trader.rank === 1 && <span className="text-xl">🥇</span>}
+                                                    {trader.rank === 2 && <span className="text-xl">🥈</span>}
+                                                    {trader.rank === 3 && <span className="text-xl">🥉</span>}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="text-right py-4 px-4 font-bold text-success">
-                                            {trader.profit}
-                                        </td>
-                                        <td className="text-right py-4 px-4 font-bold text-success">
-                                            {trader.profitPercent}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={trader.avatar}
+                                                        alt={trader.username}
+                                                        className="w-8 h-8 rounded-full"
+                                                    />
+                                                    <div>
+                                                        <p className={`font-bold ${isCurrentUser ? 'text-primary' : 'text-dark-text'}`}>
+                                                            {trader.username}
+                                                        </p>
+                                                        {isCurrentUser && (
+                                                            <p className="text-xs text-primary font-bold">You</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="text-right py-4 px-4 font-bold text-success">
+                                                {formatPrice(trader.net_worth || trader.portfolioValue || 100000)}
+                                            </td>
+                                            <td className="text-right py-4 px-4 font-bold text-success">
+                                                +{formatPercent(trader.profitPercent || 0)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 

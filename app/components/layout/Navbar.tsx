@@ -13,17 +13,9 @@ export default function Navbar() {
 
     useEffect(() => {
         setMounted(true);
-        // Load user from localStorage if available
+        // Load user from backend via JWT if available
         if (typeof window !== 'undefined') {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                try {
-                    const parsedUser = JSON.parse(savedUser);
-                    useAuthStore.setState({ isLoggedIn: true, user: parsedUser });
-                } catch (e) {
-                    console.error('Failed to load user from localStorage');
-                }
-            }
+            useAuthStore.getState().initialize();
         }
     }, []);
 
@@ -63,11 +55,11 @@ export default function Navbar() {
                             <div className="hidden sm:flex items-center gap-2">
                                 <div className="text-right">
                                     <div className="text-sm font-medium text-dark-text">{user.username}</div>
-                                    <div className="text-xs text-dark-text-secondary">{user.email}</div>
+                                    <div className="text-xs text-dark-text-secondary">Trader Account</div>
                                 </div>
                             </div>
                             <img
-                                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+                                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
                                 alt={user.username}
                                 className="w-8 h-8 rounded-full"
                             />
@@ -90,6 +82,6 @@ export default function Navbar() {
                     )}
                 </div>
             </div>
-        </nav>
+        </nav >
     );
 }

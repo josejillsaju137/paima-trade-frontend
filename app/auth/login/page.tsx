@@ -8,26 +8,21 @@ import { useAuthStore } from '@/app/store/authStore';
 export default function LoginPage() {
     const router = useRouter();
     const { login } = useAuthStore();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!email || !password) {
+        if (!username || !password) {
             setError('Please fill in all fields');
             return;
         }
 
-        if (!email.includes('@')) {
-            setError('Please enter a valid email');
-            return;
-        }
-
         try {
-            login(email, password);
+            await login(username, password);
             router.push('/dashboard');
         } catch (err) {
             setError('Login failed. Please try again.');
@@ -51,14 +46,14 @@ export default function LoginPage() {
                     <p className="text-dark-text-secondary mb-8">Sign in to your account to continue trading</p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Email */}
+                        {/* Username */}
                         <div>
-                            <label className="block text-sm font-medium mb-2 text-dark-text">Email Address</label>
+                            <label className="block text-sm font-medium mb-2 text-dark-text">Username</label>
                             <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="YourUsername"
                                 className="input"
                             />
                         </div>
@@ -110,8 +105,8 @@ export default function LoginPage() {
                         <strong>Demo Account (for testing):</strong>
                     </p>
                     <div className="space-y-1 text-xs font-mono text-dark-text bg-dark-surface-alt p-3 rounded border border-dark-border">
-                        <p>Email: demo@example.com</p>
-                        <p>Password: (any password works)</p>
+                        <p>Username: demo_user</p>
+                        <p>Password: (any password works during testing)</p>
                     </div>
                 </div>
             </div>

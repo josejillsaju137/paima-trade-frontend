@@ -22,7 +22,7 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
     const total = parseFloat(quantity || '0') * price;
     const holding = portfolio[symbol];
 
-    const handleTrade = () => {
+    const handleTrade = async () => {
         const qty = parseFloat(quantity);
 
         if (!quantity || qty <= 0) {
@@ -30,26 +30,34 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
             return;
         }
 
-        if (type === 'buy') {
-            if (balance < total) {
-                setError('Insufficient balance');
-                return;
-            }
-            if (buyAsset(symbol, qty, price)) {
+        setError('');
+
+        try {
+            if (type === 'buy') {
+                if (balance < total) {
+                    setError('Insufficient balance');
+                    return;
+                }
+
+                await buyAsset(symbol, qty, price);
+
+                onClose();
+                setQuantity('');
+                setError('');
+            } else {
+                if (!holding || holding.quantity < qty) {
+                    setError('Insufficient holdings');
+                    return;
+                }
+
+                await sellAsset(symbol, qty, price);
+
                 onClose();
                 setQuantity('');
                 setError('');
             }
-        } else {
-            if (!holding || holding.quantity < qty) {
-                setError('Insufficient holdings');
-                return;
-            }
-            if (sellAsset(symbol, qty, price)) {
-                onClose();
-                setQuantity('');
-                setError('');
-            }
+        } catch (err: any) {
+            setError(err.message || 'Trade failed');
         }
     };
 

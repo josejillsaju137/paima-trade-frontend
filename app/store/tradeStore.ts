@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export interface Trade {
   id: string;
   symbol: string;
@@ -22,13 +24,12 @@ interface TradeStore {
   portfolio: Record<string, Portfolio>;
   tradeHistory: Trade[];
 
-  // Balance operations
-  setBalance: (amount: number) => void;
-  updateBalance: (amount: number) => void;
+  fetchPortfolio: () => Promise<void>;
+  fetchTradeHistory: () => Promise<void>;
 
   // Trading operations
-  buyAsset: (symbol: string, quantity: number, price: number) => boolean;
-  sellAsset: (symbol: string, quantity: number, price: number) => boolean;
+  buyAsset: (symbol: string, quantity: number, price: number) => Promise<boolean>;
+  sellAsset: (symbol: string, quantity: number, price: number) => Promise<boolean>;
 
   // Portfolio calculations
   getTotalValue: (prices: Record<string, number>) => number;
@@ -45,100 +46,114 @@ export const useTradeStore = create<TradeStore>((set, get) => ({
   portfolio: {},
   tradeHistory: [],
 
-  setBalance: (amount) => set({ balance: amount }),
+  fetchPortfolio: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return;
 
-  updateBalance: (amount) => set((state) => ({
-    balance: state.balance + amount,
-  })),
+      const res = await fetch(`${API_URL}/api/portfolio`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-  buyAsset: (symbol, quantity, price) => {
-    const cost = quantity * price;
-    const state = get();
+      if (!res.ok) throw new Error('Failed to fetch portfolio');
 
-    if (state.balance < cost) {
-      return false;
-    }
+      const data = await res.json();
 
-    set((prevState) => {
-      const newBalance = prevState.balance - cost;
-      const portfolio = { ...prevState.portfolio };
+      // Preserve existing valid properties like averagePrice if possible, otherwise assume current market prices
+      const currentPortfolio = get().portfolio;
+      const newPortfolio: Record<string, Portfolio> = {};
 
-      if (portfolio[symbol]) {
-        const existing = portfolio[symbol];
-        const totalQuantity = existing.quantity + quantity;
-        const totalCost = existing.quantity * existing.averagePrice + cost;
-        existing.averagePrice = totalCost / totalQuantity;
-        existing.quantity = totalQuantity;
-        existing.currentPrice = price;
-      } else {
-        portfolio[symbol] = {
-          symbol,
-          quantity,
-          averagePrice: price,
-          currentPrice: price,
-        };
+      if (data.holdings && Array.isArray(data.holdings)) {
+        data.holdings.forEach((holding: any) => {
+          const existing = currentPortfolio[holding.symbol];
+          newPortfolio[holding.symbol] = {
+            symbol: holding.symbol,
+            quantity: holding.quantity,
+            averagePrice: existing?.averagePrice || 0, // Fallback if backend doesn't supply it
+            currentPrice: existing?.currentPrice || 0,
+          };
+        });
       }
 
-      const trade: Trade = {
-        id: `${Date.now()}-${Math.random()}`,
-        symbol,
-        type: 'buy',
-        quantity,
-        price,
-        timestamp: Date.now(),
-      };
-
-      return {
-        balance: newBalance,
-        portfolio,
-        tradeHistory: [trade, ...prevState.tradeHistory],
-      };
-    });
-
-    return true;
+      set({ balance: data.fiat_balance, portfolio: newPortfolio });
+    } catch (err) {
+      console.error('Error fetching portfolio:', err);
+    }
   },
 
-  sellAsset: (symbol, quantity, price) => {
-    const state = get();
-    const holding = state.portfolio[symbol];
+  fetchTradeHistory: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return;
 
-    if (!holding || holding.quantity < quantity) {
-      return false;
-    }
+      const res = await fetch(`${API_URL}/api/trade/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-    set((prevState) => {
-      const portfolio = { ...prevState.portfolio };
-      const revenue = quantity * price;
-      const profitLoss = revenue - (quantity * holding.averagePrice);
+      if (!res.ok) throw new Error('Failed to fetch trade history');
 
-      if (holding.quantity === quantity) {
-        delete portfolio[symbol];
-      } else {
-        portfolio[symbol] = {
-          ...holding,
-          quantity: holding.quantity - quantity,
-          currentPrice: price,
-        };
+      const trades = await res.json();
+
+      if (Array.isArray(trades)) {
+        set({ tradeHistory: trades });
       }
+    } catch (err) {
+      console.error('Error fetching trades:', err);
+    }
+  },
 
-      const trade: Trade = {
-        id: `${Date.now()}-${Math.random()}`,
-        symbol,
-        type: 'sell',
-        quantity,
-        price,
-        timestamp: Date.now(),
-        profitLoss,
-      };
+  buyAsset: async (symbol, quantity, price) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) throw new Error('Unauthorized');
 
-      return {
-        balance: prevState.balance + revenue,
-        portfolio,
-        tradeHistory: [trade, ...prevState.tradeHistory],
-      };
-    });
+      const res = await fetch(`${API_URL}/api/trade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ symbol, type: 'buy', quantity, price })
+      });
 
-    return true;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Buy order failed');
+
+      // Refresh data
+      await get().fetchPortfolio();
+      await get().fetchTradeHistory();
+
+      return true;
+    } catch (err: any) {
+      throw err;
+    }
+  },
+
+  sellAsset: async (symbol, quantity, price) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) throw new Error('Unauthorized');
+
+      const res = await fetch(`${API_URL}/api/trade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ symbol, type: 'sell', quantity, price })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Sell order failed');
+
+      // Refresh data
+      await get().fetchPortfolio();
+      await get().fetchTradeHistory();
+
+      return true;
+    } catch (err: any) {
+      throw err;
+    }
   },
 
   getTotalValue: (prices) => {

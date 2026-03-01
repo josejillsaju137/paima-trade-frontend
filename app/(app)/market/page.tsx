@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTradeStore } from '@/app/store/tradeStore';
 import { usePriceStore } from '@/app/store/priceStore';
-import { mockAssets } from '@/app/utils/mockData';
 import AssetTable from '@/app/components/ui/AssetTable';
 import TradeModal from '@/app/components/ui/TradeModal';
 import { formatPrice } from '@/app/utils/formatters';
+import { io } from 'socket.io-client';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function MarketPage() {
     const [mounted, setMounted] = useState(false);
@@ -27,39 +29,66 @@ export default function MarketPage() {
     const { portfolio } = useTradeStore();
     const { assets, setAssets } = usePriceStore();
 
-    // Initialize prices
+    // Refs to hold persistent data without triggering re-renders
+    const originalPriceBases = React.useRef<Record<string, number>>({});
+
+    // Initialize prices and connect to live stream
     useEffect(() => {
-        const initialAssets = mockAssets.reduce((acc, asset) => {
-            acc[asset.symbol] = asset;
-            return acc;
-        }, {} as Record<string, any>);
-        setAssets(initialAssets);
         setMounted(true);
 
-        // Simulate price updates
-        const interval = setInterval(() => {
-            const currentAssets = usePriceStore.getState().assets;
-            const updated = { ...currentAssets };
+        // Immediately fetch backend active tokens so they don't wait 10s for the first socket ping
+        fetch(`${API_URL}/api/history/NIFTY50?limit=2`)
+            .then(res => res.ok ? res.json() : [])
+            .then((data: any[]) => {
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const first = data[0]; // Gives us a mock 24h delta if there is history
 
-            Object.entries(updated).forEach(([symbol, asset]) => {
-                const randomChange = (Math.random() - 0.5) * 4; // -2% to +2%
-                const originalAsset = mockAssets.find((a) => a.symbol === symbol)!;
-                const newPrice = asset.price * (1 + randomChange / 100);
-                const change24h = newPrice - originalAsset.price;
-                const changePercent24h = (change24h / originalAsset.price) * 100;
+                    const currentPrice = parseFloat(latest.price);
+                    const basePrice = parseFloat(first.price);
 
-                updated[symbol] = {
-                    ...asset,
-                    price: newPrice,
-                    change24h,
-                    changePercent24h
-                };
-            });
+                    originalPriceBases.current['NIFTY50'] = basePrice;
 
-            setAssets(updated);
-        }, 5000); // Update every 5 seconds
+                    const change24h = currentPrice - basePrice;
+                    const changePercent24h = basePrice === 0 ? 0 : (change24h / basePrice) * 100;
 
-        return () => clearInterval(interval);
+                    usePriceStore.getState().updatePrice(
+                        'NIFTY50',
+                        currentPrice,
+                        change24h,
+                        changePercent24h
+                    );
+                }
+            })
+            .catch(err => console.error('Failed to pre-fetch NIFTY50', err));
+
+        // Connect to Socket.io stream
+        const socket = io(API_URL);
+
+        socket.on('price_update', (newMarketData: any) => {
+            const symbol = newMarketData.symbol;
+            const newPrice = parseFloat(newMarketData.price);
+
+            let originalPrice: number | undefined;
+
+            // We no longer have initialAssets, so always rely on originalPriceBases
+            if (originalPriceBases.current[symbol] === undefined) {
+                // To display an accurate 24h change, ideally backend provides it.
+                // If not, we set the first received price as the baseline
+                originalPriceBases.current[symbol] = newPrice;
+            }
+            originalPrice = originalPriceBases.current[symbol];
+
+            const change24h = newPrice - (originalPrice || newPrice);
+            const changePercent24h = (originalPrice || newPrice) === 0 ? 0 : (change24h / (originalPrice || newPrice)) * 100;
+
+            usePriceStore.getState().updatePrice(symbol, newPrice, change24h, changePercent24h);
+            usePriceStore.getState().updatePrice(symbol, newPrice, change24h, changePercent24h);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [setAssets]);
 
     if (!mounted) return <div className="p-6 text-center">Loading...</div>;

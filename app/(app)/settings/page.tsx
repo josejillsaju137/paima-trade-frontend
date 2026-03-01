@@ -43,7 +43,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 pb-6 border-b border-dark-border">
                         <img
-                            src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+                            src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`}
                             alt={user?.username}
                             className="w-16 h-16 rounded-full"
                         />
@@ -54,8 +54,8 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                        <p className="text-sm text-dark-text-secondary mb-2">Email</p>
-                        <p className="text-lg text-dark-text">{user?.email}</p>
+                        <p className="text-sm text-dark-text-secondary mb-2">Username Alias</p>
+                        <p className="text-lg text-dark-text">@{user?.username}</p>
                     </div>
 
                     <div>

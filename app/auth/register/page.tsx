@@ -9,7 +9,6 @@ export default function RegisterPage() {
     const router = useRouter();
     const { register } = useAuthStore();
     const [formData, setFormData] = useState({
-        email: '',
         username: '',
         password: '',
         confirmPassword: '',
@@ -21,18 +20,13 @@ export default function RegisterPage() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
         // Validation
-        if (!formData.email || !formData.username || !formData.password || !formData.confirmPassword) {
+        if (!formData.username || !formData.password || !formData.confirmPassword) {
             setError('Please fill in all fields');
-            return;
-        }
-
-        if (!formData.email.includes('@')) {
-            setError('Please enter a valid email');
             return;
         }
 
@@ -52,10 +46,10 @@ export default function RegisterPage() {
         }
 
         try {
-            register(formData.email, formData.username, formData.password);
+            await register(formData.username, formData.password);
             router.push('/dashboard');
-        } catch (err) {
-            setError('Registration failed. Please try again.');
+        } catch (err: any) {
+            setError(err.message || 'Registration failed. Please try again.');
         }
     };
 
@@ -76,19 +70,6 @@ export default function RegisterPage() {
                     <p className="text-dark-text-secondary mb-8">Join thousands of traders learning with PaimaTrade</p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Email */}
-                        <div>
-                            <label className="block text-sm font-medium mb-2 text-dark-text">Email Address</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="you@example.com"
-                                className="input"
-                            />
-                        </div>
-
                         {/* Username */}
                         <div>
                             <label className="block text-sm font-medium mb-2 text-dark-text">Username</label>
