@@ -27,7 +27,34 @@ export default function SettingsPage() {
         window.location.href = '/';
     };
 
-    if (!mounted) return <div className="p-6 text-center">Loading...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6">
+                <div>
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-48 mb-2" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-64" />
+                </div>
+                <div className="card">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-48 mb-6" />
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4 pb-6 border-b border-dark-border">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-full h-16 w-16" />
+                            <div>
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-24 mb-2" />
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-32" />
+                            </div>
+                        </div>
+                        {Array(2).fill(0).map((_, i) => (
+                            <div key={`info-${i}`}>
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-32 mb-2" />
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-24" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 sm:p-6 space-y-6">

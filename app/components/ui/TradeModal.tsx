@@ -17,6 +17,7 @@ interface TradeModalProps {
 export default function TradeModal({ isOpen, onClose, symbol, price, type }: TradeModalProps) {
     const [quantity, setQuantity] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const { buyAsset, sellAsset, portfolio, balance } = useTradeStore();
 
     const total = parseFloat(quantity || '0') * price;
@@ -31,11 +32,13 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
         }
 
         setError('');
+        setIsLoading(true);
 
         try {
             if (type === 'buy') {
                 if (balance < total) {
                     setError('Insufficient balance');
+                    setIsLoading(false);
                     return;
                 }
 
@@ -47,6 +50,7 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
             } else {
                 if (!holding || holding.quantity < qty) {
                     setError('Insufficient holdings');
+                    setIsLoading(false);
                     return;
                 }
 
@@ -58,6 +62,8 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
             }
         } catch (err: any) {
             setError(err.message || 'Trade failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -79,7 +85,8 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
                         </h2>
                         <button
                             onClick={onClose}
-                            className="text-2xl hover:text-primary transition-colors"
+                            disabled={isLoading}
+                            className="text-2xl hover:text-primary transition-colors disabled:opacity-50"
                         >
                             ✕
                         </button>
@@ -101,7 +108,8 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
                                     value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
                                     placeholder="0"
-                                    className="input pr-16"
+                                    disabled={isLoading}
+                                    className="input pr-16 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-text-secondary font-medium uppercase">
                                     {symbol}
@@ -123,7 +131,7 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
                             <p className="text-lg font-bold">
                                 {type === 'buy'
                                     ? formatPrice(balance)
-                                    : `${holding?.quantity?.toFixed(4) || '0.0000'} ${symbol}`}
+                                    : `${Number(holding?.quantity || 0).toFixed(4)} ${symbol}`}
                             </p>
                         </div>
 
@@ -137,17 +145,24 @@ export default function TradeModal({ isOpen, onClose, symbol, price, type }: Tra
 
                     {/* Action buttons */}
                     <div className="flex gap-3 mt-6 pt-4 border-t border-dark-border">
-                        <button onClick={onClose} className="btn-secondary flex-1">
+                        <button
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="btn-secondary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             Cancel
                         </button>
                         <button
                             onClick={handleTrade}
-                            className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-colors ${type === 'buy'
+                            disabled={isLoading}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${type === 'buy'
                                 ? 'bg-success hover:bg-green-700'
                                 : 'bg-danger hover:bg-red-700'
                                 }`}
                         >
-                            {type === 'buy' ? 'Buy' : 'Sell'}
+                            {isLoading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : type === 'buy' ? 'Buy' : 'Sell'}
                         </button>
                     </div>
                 </div>

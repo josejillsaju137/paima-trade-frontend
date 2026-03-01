@@ -22,7 +22,42 @@ export default function DashboardPage() {
         setMounted(true);
     }, [setAssets]);
 
-    if (!mounted) return <div className="p-6 text-center">Loading...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6">
+                <div>
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-48 mb-2" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-64" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {Array(4).fill(0).map((_, i) => (
+                        <div key={`stat-${i}`} className="card">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-24 mb-2" />
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-32" />
+                        </div>
+                    ))}
+                </div>
+                <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 card">
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-48 mb-4" />
+                        <div className="space-y-3">
+                            {Array(3).fill(0).map((_, i) => (
+                                <div key={`holding-${i}`} className="p-4 bg-dark-surface-alt rounded-lg border border-dark-border h-24 animate-pulse bg-white/5 dark:bg-white/10" />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="card">
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-32 mb-4" />
+                        <div className="space-y-3">
+                            {Array(5).fill(0).map((_, i) => (
+                                <div key={`mover-${i}`} className="p-3 bg-dark-surface-alt rounded-lg border border-dark-border h-16 animate-pulse bg-white/5 dark:bg-white/10" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const prices = Object.fromEntries(Object.entries(assets).map(([symbol, asset]) => [symbol, (asset as any).price]));
     const totalValue = getTotalValue(prices);
@@ -92,7 +127,7 @@ export default function DashboardPage() {
                                             <div>
                                                 <h3 className="font-bold text-dark-text">{symbol}</h3>
                                                 <p className="text-sm text-dark-text-secondary">
-                                                    {(holding as any).quantity.toFixed(4)} @ {formatPrice(currentPrice)}
+                                                    {Number((holding as any).quantity || 0).toFixed(4)} @ {formatPrice(currentPrice)}
                                                 </p>
                                             </div>
                                             <div className="text-right">

@@ -91,7 +91,36 @@ export default function MarketPage() {
         };
     }, [setAssets]);
 
-    if (!mounted) return <div className="p-6 text-center">Loading...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6">
+                <div>
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-48 mb-2" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-64" />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-12 w-full sm:flex-1" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-12 w-full sm:w-auto sm:min-w-[200px]" />
+                </div>
+                <div className="card overflow-hidden p-4">
+                    <div className="w-full space-y-4">
+                        <div className="flex justify-between border-b border-dark-border pb-4 w-full">
+                            {Array(5).fill(0).map((_, i) => (
+                                <div key={`header-${i}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-24" />
+                            ))}
+                        </div>
+                        {Array(10).fill(0).map((_, rowIndex) => (
+                            <div key={`row-${rowIndex}`} className="flex justify-between py-4 border-b border-dark-border/50">
+                                {Array(5).fill(0).map((_, colIndex) => (
+                                    <div key={`cell-${rowIndex}-${colIndex}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-5 w-24" />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // Filter and sort assets
     let displayAssets = Object.values(assets).filter((asset: any) =>

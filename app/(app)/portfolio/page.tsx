@@ -34,7 +34,58 @@ export default function PortfolioPage() {
         setMounted(true);
     }, [setAssets]);
 
-    if (!mounted) return <div className="p-6 text-center">Loading...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6">
+                <div>
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-48 mb-2" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-64" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {Array(4).fill(0).map((_, i) => (
+                        <div key={`stat-${i}`} className="card">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-24 mb-2" />
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-32" />
+                        </div>
+                    ))}
+                </div>
+                <div className="card">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-48 mb-6" />
+                    <div className="w-full space-y-4">
+                        <div className="flex justify-between border-b border-dark-border pb-4 w-full">
+                            {Array(6).fill(0).map((_, i) => (
+                                <div key={`header1-${i}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-20" />
+                            ))}
+                        </div>
+                        {Array(3).fill(0).map((_, rowIndex) => (
+                            <div key={`row1-${rowIndex}`} className="flex justify-between py-4 border-b border-dark-border/50">
+                                {Array(6).fill(0).map((_, colIndex) => (
+                                    <div key={`cell1-${rowIndex}-${colIndex}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-5 w-20" />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="card">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-48 mb-6" />
+                    <div className="w-full space-y-4">
+                        <div className="flex justify-between border-b border-dark-border pb-4 w-full">
+                            {Array(6).fill(0).map((_, i) => (
+                                <div key={`header2-${i}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-20" />
+                            ))}
+                        </div>
+                        {Array(3).fill(0).map((_, rowIndex) => (
+                            <div key={`row2-${rowIndex}`} className="flex justify-between py-4 border-b border-dark-border/50">
+                                {Array(6).fill(0).map((_, colIndex) => (
+                                    <div key={`cell2-${rowIndex}-${colIndex}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-5 w-20" />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const prices = Object.fromEntries(Object.entries(assets).map(([symbol, asset]) => [symbol, (asset as any).price]));
     const totalValue = getTotalValue(prices);
@@ -111,7 +162,7 @@ export default function PortfolioPage() {
                                     return (
                                         <tr key={symbol} className="border-b border-dark-border hover:bg-dark-surface-alt transition-colors">
                                             <td className="py-4 px-4 font-bold text-dark-text">{symbol}</td>
-                                            <td className="text-right py-4 px-4 text-dark-text">{(holding as any).quantity.toFixed(6)}</td>
+                                            <td className="text-right py-4 px-4 text-dark-text">{Number((holding as any).quantity || 0).toFixed(6)}</td>
                                             <td className="text-right py-4 px-4 text-dark-text">{formatPrice((holding as any).averagePrice)}</td>
                                             <td className="text-right py-4 px-4 text-dark-text">{formatPrice(currentPrice)}</td>
                                             <td className="text-right py-4 px-4 font-bold text-dark-text">{formatPrice(totalValue)}</td>
@@ -173,7 +224,7 @@ export default function PortfolioPage() {
                                             </span>
                                         </td>
                                         <td className="py-4 px-4 font-bold text-dark-text">{trade.symbol}</td>
-                                        <td className="text-right py-4 px-4 text-dark-text">{trade.quantity.toFixed(6)}</td>
+                                        <td className="text-right py-4 px-4 text-dark-text">{Number(trade.quantity || 0).toFixed(6)}</td>
                                         <td className="text-right py-4 px-4 text-dark-text">{formatPrice(trade.price)}</td>
                                         <td className="text-right py-4 px-4 font-bold text-dark-text">
                                             {formatPrice(trade.quantity * trade.price)}

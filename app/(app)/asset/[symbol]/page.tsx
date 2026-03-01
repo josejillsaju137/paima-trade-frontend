@@ -72,7 +72,51 @@ export default function AssetDetailsPage({ params }: { params: Promise<{ symbol:
         return () => clearInterval(interval);
     }, [setAssets, currentAsset]);
 
-    if (!mounted) return <div className="p-6 text-center text-dark-text">Loading Asset Data...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-32" />
+                    <div className="flex gap-3 w-full sm:w-auto">
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-24" />
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-24" />
+                    </div>
+                </div>
+
+                <div className="card flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-gradient-to-br from-dark-surface to-dark-surface-alt">
+                    <div className="w-full">
+                        <div className="flex items-end gap-3 mb-2">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-12 w-48" />
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-16 mb-1" />
+                        </div>
+                        <div className="flex items-center gap-4 mt-4">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-32" />
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-full h-8 w-24" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-full h-8 w-32" />
+                    </div>
+                </div>
+
+                <div className="card min-h-[500px] border-dark-border/50 flex items-center justify-center">
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 w-full h-[450px] rounded-lg" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Array(3).fill(0).map((_, i) => (
+                        <div key={`stat-${i}`} className="card-secondary flex items-center gap-4">
+                            <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-xl h-12 w-12" />
+                            <div>
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-32 mb-2" />
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-24" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     // We allow rendering even without currentAsset to support purely external real-time feeds like 'NIFTY50'
     const displayPrice = currentAsset?.price || (liveData.length > 0 ? liveData[liveData.length - 1].close : 0);

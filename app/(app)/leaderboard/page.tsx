@@ -54,7 +54,47 @@ export default function LeaderboardPage() {
         }
     };
 
-    if (!mounted) return <div className="p-6 text-center">Loading...</div>;
+    if (!mounted) {
+        return (
+            <div className="p-4 sm:p-6 space-y-6">
+                <div>
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-10 w-48 mb-2" />
+                    <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-64" />
+                </div>
+                <div className="card bg-primary/5 border border-primary/20">
+                    <div className="grid md:grid-cols-4 gap-6">
+                        {Array(4).fill(0).map((_, i) => (
+                            <div key={`stat-${i}`}>
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-24 mb-2" />
+                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-32" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="card space-y-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-64" />
+                        <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-8 w-24" />
+                    </div>
+                    {/* Skeleton Table Rows */}
+                    <div className="w-full space-y-4">
+                        <div className="flex justify-between border-b border-dark-border pb-4 w-full">
+                            {Array(4).fill(0).map((_, i) => (
+                                <div key={`header-${i}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-6 w-20" />
+                            ))}
+                        </div>
+                        {Array(5).fill(0).map((_, rowIndex) => (
+                            <div key={`row-${rowIndex}`} className="flex justify-between py-4 border-b border-dark-border/50">
+                                {Array(4).fill(0).map((_, colIndex) => (
+                                    <div key={`cell-${rowIndex}-${colIndex}`} className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-5 w-20" />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const prices = Object.fromEntries(Object.entries(assets).map(([symbol, asset]) => [symbol, (asset as any).price]));
     const totalValue = getTotalValue(prices);
@@ -105,7 +145,31 @@ export default function LeaderboardPage() {
 
                 <div className="overflow-x-auto">
                     {isLoading ? (
-                        <div className="p-8 text-center text-dark-text-secondary">Loading rankings...</div>
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-dark-border">
+                                    <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Rank</th>
+                                    <th className="text-left py-4 px-4 text-dark-text-secondary font-medium">Trader</th>
+                                    <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Valuation</th>
+                                    <th className="text-right py-4 px-4 text-dark-text-secondary font-medium">Return %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Array(5).fill(0).map((_, index) => (
+                                    <tr key={index} className="border-b border-dark-border">
+                                        <td className="py-4 px-4"><div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-full h-8 w-8" /></td>
+                                        <td className="py-4 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-full h-8 w-8" />
+                                                <div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-24" />
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-4 flex justify-end"><div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-20" /></td>
+                                        <td className="py-4 px-4 flex justify-end"><div className="animate-pulse bg-white/5 dark:bg-white/10 rounded-lg h-4 w-16" /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     ) : leaderboard.length === 0 ? (
                         <div className="p-8 text-center text-dark-text-secondary">No traders found on the leaderboard.</div>
                     ) : (
